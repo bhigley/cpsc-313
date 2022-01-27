@@ -1,24 +1,16 @@
 import logging
 import multiprocessing
-import string
+#import string
+import operator
+import glob
+import time
 
 from basicMR import SimpleMapReduce
-
-
 
 
 logging.basicConfig(filename='count_words.log', level= logging.INFO)
 
 def find_words(file_name):
-    """ words_list = []
-
-    with open(file_name,'r') as file:
-        for line in file:
-            for word in line.split():
-                item = [word, 1]
-                words_list.append(item)
-
-    return words_list"""
     STOP_WORDS = set([
             'a', 'an', 'and', 'are', 'as', 'be', 'by', 'for', 'if', 'in', 
             'is', 'it', 'of', 'or', 'py', 'rst', 'that', 'the', 'to', 'with',
@@ -38,27 +30,25 @@ def find_words(file_name):
     return output
 
 def count_words(item):
+    logging.info('Starting count words function')
+    start_time = time.perf_counter()
+
     word, occurances = item
     return (word, sum(occurances))
 
 def main():
-    import operator
-    import glob
+    
+    logging.basicConfig(filename='count_words.log', level=logging.DEBUG)
+    logging.info('Starting count words main program')
 
-    #input_files = glob.glob('*.rst')\
-    input_files = glob.glob('/Users/benhigley/Desktop/CPSC_313/test.txt')
+   # input_files = glob.glob('/Users/benhigley/Desktop/CPSC_313/test.txt')
+    input_files = glob.glob('*.txt', recursive=True)
     
     mapper = SimpleMapReduce(find_words, count_words)
     word_counts = mapper(input_files)
     print(word_counts)
     word_counts.sort(key=operator.itemgetter(1))
     word_counts.reverse()
-
-   # print(find_words('test.txt'))
-    #mapper = SimpleMapReduce(find_words, count_words)
-   # word_counts = mapper('test.txt')
-   #create_file()
-    #print("test")
 
 # delete later
 def create_file(source_words, filename, max_file_size):
@@ -72,6 +62,11 @@ def create_file(source_words, filename, max_file_size):
             current_file.write(random_word + ' ')
             cur_file_size += len(random_word) + 1
             word_counts[random_word] = word_counts.get(random_word, 0) + 1
+
+def create_source_words(count_words):
+    # Call a simple dictionary service (found by searching) to get the random word list
+    resp = requests.get(f"https://random-word-api.herokuapp.com/word?number={count_words}")
+    return list(resp.json())
 
 if __name__ == '__main__':
     main()
